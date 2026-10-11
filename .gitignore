@@ -1,0 +1,12 @@
+.build/
+dist/
+.DS_Store
+.codex/
+.vscode/
+*.p12
+*.p8
+*.mobileprovision
+*.provisionprofile
+*.pem
+.env
+.env.*
