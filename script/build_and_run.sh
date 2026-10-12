@@ -7,6 +7,10 @@ APP_NAME="Snaplet"
 APP_VERSION="${SNAPLET_VERSION:-1.0.0}"
 APP_BUILD="${SNAPLET_BUILD:-1}"
 UPDATE_KEY="$(cat "$ROOT_DIR/Assets/UpdatePublicKey.txt")"
+SIGN_OPTIONS=(--timestamp=none)
+if [[ "${SNAPLET_DISTRIBUTION:-0}" == 1 ]]; then
+  SIGN_OPTIONS=(--timestamp --options runtime)
+fi
 SIGNING_CONFIG="$ROOT_DIR/.codex/signing-identity"
 SIGNING_IDENTITY="${SNAPLET_SIGNING_IDENTITY:-}"
 if [[ -z "$SIGNING_IDENTITY" && -f "$SIGNING_CONFIG" ]]; then
@@ -76,12 +80,14 @@ PLIST
 xattr -cr "$APP_BUNDLE"
 SPARKLE_CODE="$APP_BUNDLE/Contents/Frameworks/Sparkle.framework/Versions/B"
 for NESTED_CODE in "$SPARKLE_CODE/XPCServices/Downloader.xpc" "$SPARKLE_CODE/XPCServices/Installer.xpc" "$SPARKLE_CODE/Autoupdate" "$SPARKLE_CODE/Updater.app" "$APP_BUNDLE/Contents/Frameworks/Sparkle.framework"; do
-  codesign --force --timestamp=none --preserve-metadata=entitlements --sign "$SIGNING_IDENTITY" "$NESTED_CODE"
+  codesign --force "${SIGN_OPTIONS[@]}" --preserve-metadata=entitlements --sign "$SIGNING_IDENTITY" "$NESTED_CODE"
 done
-codesign --force --timestamp=none --sign "$SIGNING_IDENTITY" "$APP_BUNDLE"
+codesign --force "${SIGN_OPTIONS[@]}" --sign "$SIGNING_IDENTITY" "$APP_BUNDLE"
 codesign --verify --strict "$APP_BUNDLE"
 mkdir -p "$ROOT_DIR/.codex"
-printf '%s\n' "$SIGNING_IDENTITY" > "$SIGNING_CONFIG"
+if [[ "${SNAPLET_DISTRIBUTION:-0}" != 1 ]]; then
+  printf '%s\n' "$SIGNING_IDENTITY" > "$SIGNING_CONFIG"
+fi
 mkdir -p "$ROOT_DIR/dist"
 ditto --noextattr --norsrc "$APP_BUNDLE" "$ROOT_DIR/dist/Snaplet.app"
 APP_BUNDLE="$ROOT_DIR/dist/Snaplet.app"

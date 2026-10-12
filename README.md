@@ -50,7 +50,7 @@
 
 更新使用 Sparkle 和 [GitHub Releases](https://github.com/pskishere/Snaplet/releases)，支持手动检查、自动检查、签名验证、下载及安装重启。自动检查默认关闭，可在权限与更新页面开启。更新签名私钥保存在本机钥匙串的 `com.local.lightcapture.updates` 账户，公钥在 `Assets/UpdatePublicKey.txt`。不要重新生成或上传私钥。
 
-准备发行包：`script/prepare_release.sh 1.0.1 2 release-notes.md`。版本使用三段数字，构建号必须递增；输出 `dist/releases/v1.0.1/` 的 ZIP 和签名 appcast，不安装或发布。公开分发前需用 Developer ID 签名及公证；当前 Apple Development 构建只用于开发验证。发布时先将 ZIP 上传到对应的 GitHub Release，确认下载地址有效，再更新仓库根目录的 appcast.xml。当前公开安装包为未公证的 Apple Silicon 预发布版本；稳定更新源暂未启用。
+准备发行包：`script/prepare_release.sh 1.0.1 2 release-notes.md`。版本使用三段数字，构建号必须递增；输出 `dist/releases/v1.0.1/` 的 ZIP 和签名 appcast，不安装或发布。公开分发前需用 Developer ID 签名及公证；当前 Apple Development 构建只用于开发验证。发布时先将 ZIP 上传到对应的 GitHub Release，确认下载地址有效，再更新仓库根目录的 appcast.xml。1.0.1 安装包因 Gatekeeper 报告签名证书被吊销已撤回为草稿；稳定更新源暂未启用。
 
 预览原图和历史缩略图分别缓存，历史列表按需加载；删除及新增记录局部更新。马赛克图像在第一次使用时生成，常规构建使用 Release 优化。
 
@@ -63,3 +63,7 @@
 发行准备脚本会校验构建号高于已发布和本机已准备的版本，拒绝重复版本或覆盖输出目录，并合并已有更新源；无法获取在线更新源时停止准备，避免跳过校验。
 
 回归检查：`swift test -c release`。测试使用独立临时目录与偏好域，不读写用户截图。
+
+### 正式发布签名
+
+发行脚本只接受有效的 Developer ID Application 证书。通过 `SNAPLET_DISTRIBUTION_IDENTITY` 指定证书指纹，通过 `SNAPLET_NOTARY_PROFILE` 指定本机 notarytool 钥匙串配置名称。使用安全时间戳和 Hardened Runtime 签名后，提交 Apple 公证、附加公证票据，并检查解压后的 Gatekeeper 评估；任何一步失败均停止发行。开发证书不会用于公开发行，也不会覆盖本地开发签名配置。凭据仅保存在本机钥匙串，不应提交到仓库。
